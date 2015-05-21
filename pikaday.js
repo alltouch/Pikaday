@@ -240,6 +240,9 @@
         // how many months are visible
         numberOfMonths: 1,
 
+        //date
+        showDate: true,
+
         // time
         showTime: true,
         showSeconds: false,
@@ -402,40 +405,66 @@
         return '<table cellpadding="0" cellspacing="0" class="pika-table">' + renderHead(opts) + renderBody(data) + '</table>';
     },
 
-    renderTimePicker = function(num_options, selected_val, select_class, display_func) {
-        var to_return = '<td><select class="pika-select '+select_class+'">';
-        for (var i=0; i<num_options; i++) {
-            to_return += '<option value="'+i+'" '+(i==selected_val ? 'selected' : '')+'>'+display_func(i)+'</option>'
-        }
-        to_return += '</select></td>';
-        return to_return;
-    },
+    renderTime = function (hh, mm, ss, opts) {
+        var showSeconds = opts.format.toLowerCase().indexOf('s') > 0;
+        var showMeridian = opts.format.toLowerCase().indexOf('a') > 0;
+        var aa = hh > 11 ? 'PM' : 'AM';
 
-    renderTime = function(hh, mm, ss, opts)
-    {
-        var to_return = '<table cellpadding="0" cellspacing="0" class="pika-time"><tbody><tr>' +
-            renderTimePicker(24, hh, 'pika-select-hour', function(i) {
-                if (opts.use24hour) {
-                    return i;
-                } else {
-                    var to_return = (i%12) + (i<12 ? ' AM' : ' PM');
-                    if (to_return == '0 AM') {
-                        return opts.i18n.midnight;
-                    } else if (to_return == '0 PM') {
-                        return opts.i18n.noon;
-                    } else {
-                        return to_return;
-                    }
-                }
-            }) +
-            '<td>:</td>' +
-            renderTimePicker(60, mm, 'pika-select-minute', function(i) { if (i < 10) return "0" + i; return i });
-
-        if (opts.showSeconds) {
-            to_return += '<td>:</td>' +
-                renderTimePicker(60, ss, 'pika-select-second', function(i) { if (i < 10) return "0" + i; return i });
+        if(showMeridian){
+            hh = hh%12;
         }
-        return to_return + '</tr></tbody></table>';
+
+        var to_return = '<table cellpadding="0" cellspacing="0" class="pika-time"><tbody>' ;
+        to_return += '<tr>'+
+                '<td><a href="#" class="incrementHour"><span class="glyphicon glyphicon-chevron-up" aria-hidden="true"></span></a></td>' +
+                '<td class="separator">&nbsp;</td>' +
+                '<td><a href="#" class="incrementMinute"><span class="glyphicon glyphicon-chevron-up" aria-hidden="true"></span></a></td>' +
+
+
+                (showSeconds ? (
+                '<td class="separator">&nbsp;</td>' +
+                '<td><a href="#" class="incrementSecond"><span class="glyphicon glyphicon-chevron-up" aria-hidden="true"></span></a></td>'
+                ) : "") +
+
+                (showMeridian ? (
+                '<td class="separator">&nbsp;</td>' +
+                '<td><a href="#" class="toggleMeridian"><span class="glyphicon glyphicon-chevron-up" aria-hidden="true"></span></a></td>'
+                ) : "") +
+            '</tr>';
+
+        to_return += '<tr>' +
+                '<td><p class="form-control-static timepicker-hour">' + hh + '</p></td>' +
+                '<td class="separator">:</td>' +
+                '<td><p class="form-control-static timepicker-minute">' + mm + '</p></td>' +
+
+                (showSeconds ? (
+                '<td class="separator">:</td>' +
+                '<td><p class="form-control-static timepicker-second">' + ss + '</p></td>'
+                ) : "") +
+
+                (showMeridian ? (
+                '<td class="separator">&nbsp;</td>' +
+                '<td><p class="form-control-static timepicker-meridian">' + aa + '</p></td>'
+                ) : "") +
+            '</tr>';
+
+        to_return += '<tr>' +
+                '<td><a href="#" class="decrementHour"><span class="glyphicon glyphicon-chevron-down" aria-hidden="true"></span></a></td>' +
+                '<td class="separator">&nbsp;</td>' +
+                '<td><a href="#" class="decrementMinute"><span class="glyphicon glyphicon-chevron-down" aria-hidden="true"></span></a></td>' +
+
+                (showSeconds ? (
+                '<td class="separator">&nbsp;</td>' +
+                '<td><a href="#" class="decrementSecond"><span class="glyphicon glyphicon-chevron-down" aria-hidden="true"></span></a></td>'
+                ) : "") +
+
+                (showMeridian ? (
+                '<td class="separator">&nbsp;</td>' +
+                '<td><a href="#" class="toggleMeridian"><span class="glyphicon glyphicon-chevron-down" aria-hidden="true"></span></a></td>'
+                ) : "") +
+            '</tr>';
+
+        return to_return + '</tbody></table>';
     },
 
 
@@ -459,7 +488,7 @@
                 return;
             }
 
-            // Do not preventDefaul when using time picker
+            // Do not preventDefault when using time picker
             if (!hasClass(target, 'pika-select-hour')
                         && !hasClass(target, 'pika-select-minute')
                         && !hasClass(target, 'pika-select-second')) {
@@ -494,6 +523,34 @@
                 }
                 else if (hasClass(target, 'pika-next')) {
                     self.nextMonth();
+                } else if(hasClass(target.parentNode, 'incrementHour') ||
+                    hasClass(target, 'incrementHour')){
+                    self.setTime((self._d.getHours() + 1)%24);
+                    self.draw();
+                } else if(hasClass(target.parentNode, 'incrementMinute') ||
+                    hasClass(target, 'incrementMinute')){
+                    self.setTime(null, (self._d.getMinutes() + 5)%60);
+                    self.draw();
+                } else if(hasClass(target.parentNode, 'decrementHour') ||
+                    hasClass(target, 'decrementHour')){
+                    self.setTime((self._d.getHours() + 23)%24);
+                    self.draw();
+                } else if(hasClass(target.parentNode, 'decrementMinute') ||
+                    hasClass(target, 'decrementMinute')){
+                    self.setTime(null, (self._d.getMinutes() + 55)%60);
+                    self.draw();
+                } else if(hasClass(target.parentNode, 'incrementSecond') ||
+                    hasClass(target, 'incrementSecond')) {
+                    self.setTime(null, null, (self._d.getSeconds() + 5) % 60);
+                    self.draw();
+                } else if(hasClass(target.parentNode, 'decrementSecond') ||
+                    hasClass(target, 'decrementSecond')) {
+                    self.setTime(null, null, (self._d.getSeconds() + 55) % 60);
+                    self.draw();
+                } else if (hasClass(target.parentNode, 'toggleMeridian') ||
+                    hasClass(target, 'toggleMeridian')){
+                    self.setTime((self._d.getHours() + 12) % 24);
+                    self.draw();
                 }
             }
             if (!hasClass(target, 'pika-select')) {
@@ -723,9 +780,12 @@
 
             // If no format is given, set based on showTime
             if (opts.format === null) {
-                opts.format = 'YYYY-MM-DD';
+                opts.format = opts.showDate ? 'YYYY-MM-DD' : '';
                 if (opts.showTime) {
-                    opts.format += ' HH:mm:ss';
+                    if(opts.format.length){
+                        opts.format += ' ';
+                    }
+                    opts.format += 'HH:mm:ss';
                 }
             }
 
@@ -779,13 +839,13 @@
                 this._d = new Date();
                 this._d.setHours(0,0,0,0);
             }
-            if (hours) {
+            if (typeof hours === 'number') {
                 this._d.setHours(hours);
             }
-            if (minutes) {
+            if (typeof minutes === 'number') {
                 this._d.setMinutes(minutes);
             }
-            if (seconds) {
+            if (typeof seconds === 'number') {
                 this._d.setSeconds(seconds);
             }
             this.setDate(this._d);
@@ -824,9 +884,7 @@
 
             this._d = new Date(date.getTime());
 
-            if (this._o.showTime && !this._o.showSeconds) {
-                this._d.setSeconds(0);
-            } else if (!this._o.showTime) {
+            if (!this._o.showTime) {
                 setToStartOfDay(this._d);
             }
 
@@ -976,8 +1034,10 @@
                 }
             }
 
-            for (var c = 0; c < opts.numberOfMonths; c++) {
-                html += '<div class="pika-lendar">' + renderTitle(this, c, this.calendars[c].year, this.calendars[c].month, this.calendars[0].year) + this.render(this.calendars[c].year, this.calendars[c].month) + '</div>';
+            if(opts.showDate) {
+                for (var c = 0; c < opts.numberOfMonths; c++) {
+                    html += '<div class="pika-lendar">' + renderTitle(this, c, this.calendars[c].year, this.calendars[c].month, this.calendars[0].year) + this.render(this.calendars[c].year, this.calendars[c].month) + '</div>';
+                }
             }
 
             if (opts.showTime) {
