@@ -414,53 +414,90 @@
             hh = hh%12;
         }
 
+        var rowCount = function(){
+            return 3 + (showSeconds ? 2 : 0) + (showMeridian ? 2 : 0);
+        };
+
+        var getCurrent = function(){
+            var d = new Date();
+            var r = [];
+            r[0] = d.getHours();
+            r[1] = d.getMinutes();
+
+            if(showSeconds){
+                r[2] = d.getSeconds();
+                if(('' + r[2]).length === 1){
+                    r[2] = '0' + r[2];
+                }
+            }
+
+            if(showMeridian){
+                r[3] = r[0] > 11 ? 'PM' : 'AM';
+                r[0] = r[0] % 12;
+            }
+
+            if(('' + r[0]).length === 1){
+                r[0] = '0' + r[0];
+            }
+            if(('' + r[1]).length === 1){
+                r[1] = '0' + r[1];
+            }
+
+            return '' + r[0] + ':' + r[1] + (r.length > 2 ? ':' + r[2] : '' ) + (r.length > 3 ? ' ' + r[3] : '' );
+        };
+
+
+        var iconUp = '<span class="glyphicon glyphicon-triangle-top" aria-hidden="true"></span>';
+        var iconDown = '<span class="glyphicon glyphicon-triangle-bottom" aria-hidden="true"></span>';
         var to_return = '<table cellpadding="0" cellspacing="0" class="pika-time"><tbody>' ;
+
+        to_return += '<tr><td class="current" colspan="' + rowCount() + '"><a href="#" class="current">Current: ' + getCurrent() + '</a></td></tr>';
         to_return += '<tr>'+
-                '<td><a href="#" class="incrementHour"><span class="glyphicon glyphicon-chevron-up" aria-hidden="true"></span></a></td>' +
+                '<td><a href="#" class="incrementHour">' + iconUp + '</a></td>' +
                 '<td class="separator">&nbsp;</td>' +
-                '<td><a href="#" class="incrementMinute"><span class="glyphicon glyphicon-chevron-up" aria-hidden="true"></span></a></td>' +
+                '<td><a href="#" class="incrementMinute">' + iconUp + '</a></td>' +
 
 
                 (showSeconds ? (
                 '<td class="separator">&nbsp;</td>' +
-                '<td><a href="#" class="incrementSecond"><span class="glyphicon glyphicon-chevron-up" aria-hidden="true"></span></a></td>'
+                '<td><a href="#" class="incrementSecond">' + iconUp + '</a></td>'
                 ) : "") +
 
                 (showMeridian ? (
                 '<td class="separator">&nbsp;</td>' +
-                '<td><a href="#" class="toggleMeridian"><span class="glyphicon glyphicon-chevron-up" aria-hidden="true"></span></a></td>'
+                '<td><a href="#" class="toggleMeridian">' + iconUp + '</a></td>'
                 ) : "") +
             '</tr>';
 
         to_return += '<tr>' +
-                '<td><p class="form-control-static timepicker-hour">' + hh + '</p></td>' +
+                '<td><p class="form-control-static">' + hh + '</p></td>' +
                 '<td class="separator">:</td>' +
-                '<td><p class="form-control-static timepicker-minute">' + mm + '</p></td>' +
+                '<td><p class="form-control-static">' + mm + '</p></td>' +
 
                 (showSeconds ? (
                 '<td class="separator">:</td>' +
-                '<td><p class="form-control-static timepicker-second">' + ss + '</p></td>'
+                '<td><p class="form-control-static">' + ss + '</p></td>'
                 ) : "") +
 
                 (showMeridian ? (
                 '<td class="separator">&nbsp;</td>' +
-                '<td><p class="form-control-static timepicker-meridian">' + aa + '</p></td>'
+                '<td><p class="form-control-static">' + aa + '</p></td>'
                 ) : "") +
             '</tr>';
 
         to_return += '<tr>' +
-                '<td><a href="#" class="decrementHour"><span class="glyphicon glyphicon-chevron-down" aria-hidden="true"></span></a></td>' +
+                '<td><a href="#" class="decrementHour">' + iconDown + '</a></td>' +
                 '<td class="separator">&nbsp;</td>' +
-                '<td><a href="#" class="decrementMinute"><span class="glyphicon glyphicon-chevron-down" aria-hidden="true"></span></a></td>' +
+                '<td><a href="#" class="decrementMinute">' + iconDown + '</a></td>' +
 
                 (showSeconds ? (
                 '<td class="separator">&nbsp;</td>' +
-                '<td><a href="#" class="decrementSecond"><span class="glyphicon glyphicon-chevron-down" aria-hidden="true"></span></a></td>'
+                '<td><a href="#" class="decrementSecond">' + iconDown + '</a></td>'
                 ) : "") +
 
                 (showMeridian ? (
                 '<td class="separator">&nbsp;</td>' +
-                '<td><a href="#" class="toggleMeridian"><span class="glyphicon glyphicon-chevron-down" aria-hidden="true"></span></a></td>'
+                '<td><a href="#" class="toggleMeridian">' + iconDown + '</a></td>'
                 ) : "") +
             '</tr>';
 
@@ -484,6 +521,7 @@
             }
             e = e || window.event;
             var target = e.target || e.srcElement;
+            var _value;
             if (!target) {
                 return;
             }
@@ -525,33 +563,57 @@
                     self.nextMonth();
                 } else if(hasClass(target.parentNode, 'incrementHour') ||
                     hasClass(target, 'incrementHour')){
-                    self.setTime((self._d.getHours() + 1)%24);
+                    _value = self._d ? self._d.getHours() : 0;
+                    self.setTime((_value + 1)%24);
                     self.draw();
                 } else if(hasClass(target.parentNode, 'incrementMinute') ||
                     hasClass(target, 'incrementMinute')){
-                    self.setTime(null, (self._d.getMinutes() + 5)%60);
+                    _value = (self._d ? self._d.getMinutes() : 0) + 5;
+                    if(_value % 5 > 0){
+                        _value -= _value % 5;
+                    }
+                    self.setTime(null, _value % 60);
                     self.draw();
                 } else if(hasClass(target.parentNode, 'decrementHour') ||
                     hasClass(target, 'decrementHour')){
-                    self.setTime((self._d.getHours() + 23)%24);
+                    _value = self._d ? self._d.getHours() : 0;
+                    self.setTime((_value + 23)%24);
                     self.draw();
                 } else if(hasClass(target.parentNode, 'decrementMinute') ||
                     hasClass(target, 'decrementMinute')){
-                    self.setTime(null, (self._d.getMinutes() + 55)%60);
+                    _value = (self._d ? self._d.getMinutes() : 0) + 55;
+                    if(_value % 5 > 0){
+                        _value += 5 - _value % 5;
+                    }
+                    self.setTime(null, _value % 60);
                     self.draw();
                 } else if(hasClass(target.parentNode, 'incrementSecond') ||
                     hasClass(target, 'incrementSecond')) {
-                    self.setTime(null, null, (self._d.getSeconds() + 5) % 60);
+                    _value = (self._d ? self._d.getSeconds() : 0) + 5;
+                    if(_value % 5 > 0){
+                        _value -= _value % 5;
+                    }
+                    self.setTime(null, null, _value % 60);
                     self.draw();
                 } else if(hasClass(target.parentNode, 'decrementSecond') ||
                     hasClass(target, 'decrementSecond')) {
-                    self.setTime(null, null, (self._d.getSeconds() + 55) % 60);
+                    _value = (self._d ? self._d.getSeconds() : 0) + 55;
+                    if(_value % 5 > 0){
+                        _value += 5 - _value % 5;
+                    }
+                    self.setTime(null, null, _value % 60);
                     self.draw();
                 } else if (hasClass(target.parentNode, 'toggleMeridian') ||
                     hasClass(target, 'toggleMeridian')){
-                    self.setTime((self._d.getHours() + 12) % 24);
+                    _value = self._d ? self._d.getHours() : 0;
+                    self.setTime((_value + 12) % 24);
+                    self.draw();
+                } else if (hasClass(target, 'current')){
+                    var _d = new Date();
+                    self.setTime(_d.getHours(), _d.getMinutes(), _d.getSeconds());
                     self.draw();
                 }
+
             }
             if (!hasClass(target, 'pika-select')) {
                 if (e.preventDefault) {

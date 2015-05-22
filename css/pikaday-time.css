@@ -6,6 +6,14 @@
     margin: 0;
 }
 
+.pika-time td.current{
+    text-align: center;
+}
+
+.pika-time td.current a{
+    padding: 3px;
+}
+
 .pika-time td:not(.separator){
     min-width: 45px;
     text-align: center;
@@ -26,7 +34,7 @@
     padding: 6px 0 1px;
     outline: 0;
     color: #333;
-    font-size: 18px;
+    font-size: 13px;
     vertical-align: middle;
 }
 
