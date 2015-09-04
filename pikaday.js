@@ -187,6 +187,9 @@
         // automatically show/hide the picker on `field` focus (default `true` if `field` is set)
         bound: undefined,
 
+        // whether on bound mode we should focus input on destroy
+        noFocusOnDestroy: false,
+
         // position of the datepicker, relative to the field (default to bottom & left)
         // ('bottom' & 'left' keywords are not used, 'top' & 'right' are modifier on the bottom/left position)
         position: 'bottom left',
@@ -1114,7 +1117,7 @@
 
             this.el.innerHTML = html;
 
-            if (opts.bound) {
+            if (opts.bound && !opts.noFocusOnDestroy) {
                 if(opts.field.type !== 'hidden') {
                     sto(function() {
                         opts.trigger.focus();
